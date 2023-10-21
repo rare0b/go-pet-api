@@ -3,8 +3,8 @@ package controller
 import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
-	"github.com/rare0b/go-pet-api/api/domain/entity"
-	"github.com/rare0b/go-pet-api/api/usecase"
+	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
+	"github.com/rare0b/go-pet-api/internal/api/usecase"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,7 +24,7 @@ type petController struct {
 	petUsecase usecase.PetUsecase
 }
 
-func NewPetController(petUsecase *usecase.PetUsecase) PetController {
+func NewPetController(petUsecase usecase.PetUsecase) PetController {
 	return &petController{petUsecase}
 }
 
@@ -86,7 +86,7 @@ func (c *petController) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-func (c *petController) GetPetsByStatus(w http.ResponseWriter, r *http.Request) {
+func (c *petController) GetPetsByStatuses(w http.ResponseWriter, r *http.Request) {
 	queryStatus := r.URL.Query().Get("status")
 	if queryStatus == "" {
 		http.Error(w, `{"error": "Status parameter is required"}`, http.StatusBadRequest)

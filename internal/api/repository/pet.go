@@ -1,14 +1,16 @@
 package repository
 
-import "github.com/rare0b/go-pet-api/api/db"
+import (
+	"github.com/jmoiron/sqlx"
+)
 
 type PetRepository interface {
 }
 
 type petRepository struct {
-	db db.DB
+	db *sqlx.DB
 }
 
-func NewPetRepository(db db.DB) PetRepository {
+func NewPetRepository(db *sqlx.DB) PetRepository {
 	return &petRepository{db}
 }
