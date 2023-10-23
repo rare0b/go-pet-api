@@ -1,6 +1,6 @@
 package usecase
 
-// mockgen -source="internal/api/usecase/pet.go" -destination="internal/mock/usecase/pet.go" -package=mock
+//go:generate mockgen -source="internal/api/usecase/pet.go" -destination="internal/mock/usecase/pet.go" -package=mock
 
 import (
 	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
@@ -25,25 +25,51 @@ func NewPetUsecase(petRepository repository.PetRepository) PetUsecase {
 }
 
 func (u *petUsecase) UploadImage(id string, additionalMetadata string, file string) error {
-
+	//TODO
+	return nil
 }
 
 func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
+	pet, err := u.petRepository.CreatePet(pet)
+	if err != nil {
+		return nil, err
+	}
 
+	return pet, nil
 }
 
 func (u *petUsecase) GetPetsByStatuses(statuses []string) ([]*entity.Pet, error) {
+	pet, err := u.petRepository.GetPetsByStatuses(statuses)
+	if err != nil {
+		return nil, err
+	}
 
+	return pet, nil
 }
 
 func (u *petUsecase) GetPetByID(id int64) (*entity.Pet, error) {
+	pet, err := u.petRepository.GetPetByID(id)
+	if err != nil {
+		return nil, err
+	}
 
+	return pet, nil
 }
 
 func (u *petUsecase) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error) {
+	pet, err := u.petRepository.UpdatePetByID(id, pet)
+	if err != nil {
+		return nil, err
+	}
 
+	return pet, nil
 }
 
 func (u *petUsecase) DeletePetByID(id int64) error {
+	err := u.petRepository.DeletePetByID(id)
+	if err != nil {
+		return err
+	}
 
+	return nil
 }
