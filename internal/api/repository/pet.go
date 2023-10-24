@@ -33,7 +33,7 @@ func (r *petRepository) UploadImage(id string, additionalMetadata string, file s
 }
 
 func (r *petRepository) CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error) {
-	query := `INSERT INTO pets (id, category_id, name, photo_urls, status) VALUES (:Category, :Name, :PhotoUrls, :Status)`
+	query := `INSERT INTO pets (pet_id, category_id, pet_name, photo_urls, status) VALUES (:pet_id, :category_id, :pet_name, :photo_urls, :status)`
 	rows, err := r.db.NamedQuery(query, petDBModel)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (r *petRepository) CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetD
 }
 
 func (r *petRepository) CreateCategoryIfNotExist(categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error) {
-	query := `INSERT INTO categories (category_id, category_name) VALUES (:CategoryID, :CategoryName) ON CONFLICT DO NOTHING`
+	query := `INSERT INTO categories (category_id, category_name) VALUES (:category_id, :category_name) ON CONFLICT DO NOTHING`
 	rows, err := r.db.NamedQuery(query, categoryDBModel)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (r *petRepository) CreateCategoryIfNotExist(categoryDBModel *dbmodel.Catego
 }
 
 func (r *petRepository) CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error) {
-	query := `INSERT INTO tags (tag_id, pet_id, tag_name) VALUES (:TagID, :PetID, :TagName) ON CONFLICT DO NOTHING`
+	query := `INSERT INTO tags (tag_id, pet_id, tag_name) VALUES (:tag_id, :pet_id, :tag_name) ON CONFLICT DO NOTHING`
 	var NewTagDBModels []*dbmodel.TagDBModel
 
 	//TODO:バルクインサートにしたい

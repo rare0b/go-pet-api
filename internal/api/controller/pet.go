@@ -41,18 +41,21 @@ func (c *petController) CreatePet(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(pet)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	pet, err = c.petUsecase.CreatePet(pet)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	response, err := json.Marshal(pet)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
