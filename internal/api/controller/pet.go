@@ -1,5 +1,7 @@
 package controller
 
+//go:generate mockgen -source=internal/api/controller/pet.go -destination=internal/mock/controller/pet.go -package=mock
+
 import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
