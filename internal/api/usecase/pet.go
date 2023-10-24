@@ -3,6 +3,9 @@ package usecase
 //go:generate mockgen -source="internal/api/usecase/pet.go" -destination="internal/mock/usecase/pet.go" -package=mock
 
 import (
+	"fmt"
+	"github.com/go-openapi/errors"
+	"github.com/rare0b/go-pet-api/internal/api/domain/dbmodel"
 	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
 	"github.com/rare0b/go-pet-api/internal/api/repository"
 )
@@ -26,11 +29,25 @@ func NewPetUsecase(petRepository repository.PetRepository) PetUsecase {
 
 func (u *petUsecase) UploadImage(id string, additionalMetadata string, file string) error {
 	//TODO
-	return nil
+	return errors.New(500, fmt.Sprintf("not implemented in petUsecase.UploadImage"))
 }
 
 func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
-	pet, err := u.petRepository.CreatePet(pet)
+	categoryDBModel := PetEntityToCategoryDBModel(pet)
+	petDBModel := PetEntityToPetDBModel(pet)
+	tagDBModels := PetEntityToTagDBModels(pet)
+
+	categoryDBModel, err := u.petRepository.CreateCategoryIfNotExist(categoryDBModel)
+	if err != nil {
+		return nil, err
+	}
+
+	petDBModel, err = u.petRepository.CreatePet(petDBModel)
+	if err != nil {
+		return nil, err
+	}
+
+	tagDBModels, err = u.petRepository.CreateTagsIfNotExist(tagDBModels)
 	if err != nil {
 		return nil, err
 	}
@@ -39,37 +56,50 @@ func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
 }
 
 func (u *petUsecase) GetPetsByStatuses(statuses []string) ([]*entity.Pet, error) {
-	pet, err := u.petRepository.GetPetsByStatuses(statuses)
-	if err != nil {
-		return nil, err
-	}
-
-	return pet, nil
+	//TODO
+	return nil, errors.New(500, fmt.Sprintf("not implemented in petUsecase.GetPetsByStatuses"))
 }
 
 func (u *petUsecase) GetPetByID(id int64) (*entity.Pet, error) {
-	pet, err := u.petRepository.GetPetByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return pet, nil
+	//TODO
+	return nil, errors.New(500, fmt.Sprintf("not implemented in petUsecase.GetPetByID"))
 }
 
 func (u *petUsecase) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error) {
-	pet, err := u.petRepository.UpdatePetByID(id, pet)
-	if err != nil {
-		return nil, err
-	}
-
-	return pet, nil
+	//TODO
+	return nil, errors.New(500, fmt.Sprintf("not implemented in petUsecase.UpdatePetByID"))
 }
 
 func (u *petUsecase) DeletePetByID(id int64) error {
-	err := u.petRepository.DeletePetByID(id)
-	if err != nil {
-		return err
-	}
+	//TODO
+	return errors.New(500, fmt.Sprintf("not implemented in petUsecase.DeletePetByID"))
+}
 
-	return nil
+func PetEntityToCategoryDBModel(pet *entity.Pet) *dbmodel.CategoryDBModel {
+	return &dbmodel.CategoryDBModel{
+		CategoryID:   pet.Category.ID,
+		CategoryName: pet.Category.Name,
+	}
+}
+
+func PetEntityToPetDBModel(pet *entity.Pet) *dbmodel.PetDBModel {
+	return &dbmodel.PetDBModel{
+		PetID:      pet.ID,
+		CategoryID: pet.Category.ID,
+		PetName:    *pet.Name,
+		PhotoUrls:  pet.PhotoUrls,
+		Status:     pet.Status,
+	}
+}
+
+func PetEntityToTagDBModels(pet *entity.Pet) []*dbmodel.TagDBModel {
+	var tagDBModels []*dbmodel.TagDBModel
+	for _, tag := range pet.Tags {
+		tagDBModels = append(tagDBModels, &dbmodel.TagDBModel{
+			TagID:   tag.ID,
+			PetID:   pet.ID,
+			TagName: tag.Name,
+		})
+	}
+	return tagDBModels
 }
