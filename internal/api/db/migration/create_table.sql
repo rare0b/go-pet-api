@@ -29,7 +29,7 @@ CREATE TABLE pet_tags
 (
     pet_id INT NOT NULL,
     tag_id INT NOT NULL,
-    PRIMARY KEY (pet_id, tag_id),
+    PRIMARY KEY pk_pet_tags (pet_id, tag_id),
     FOREIGN KEY (pet_id) REFERENCES pets (pet_id),
     FOREIGN KEY (tag_id) REFERENCES tags (tag_id)
 );

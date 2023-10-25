@@ -36,6 +36,7 @@ func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
 	categoryDBModel := PetEntityToCategoryDBModel(pet)
 	petDBModel := PetEntityToPetDBModel(pet)
 	tagDBModels := PetEntityToTagDBModels(pet)
+	petTagDBModels := PetEntityToPetTagDBModels(pet)
 
 	categoryDBModel, err := u.petRepository.CreateCategoryIfNotExist(categoryDBModel)
 	if err != nil {
@@ -48,6 +49,11 @@ func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
 	}
 
 	tagDBModels, err = u.petRepository.CreateTagsIfNotExist(tagDBModels)
+	if err != nil {
+		return nil, err
+	}
+
+	petTagDBModels, err = u.petRepository.CreatePetTagsIfNotExist(petTagDBModels)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +103,19 @@ func PetEntityToTagDBModels(pet *entity.Pet) []*dbmodel.TagDBModel {
 	for _, tag := range pet.Tags {
 		tagDBModels = append(tagDBModels, &dbmodel.TagDBModel{
 			TagID:   tag.ID,
-			PetID:   pet.ID,
 			TagName: tag.Name,
 		})
 	}
 	return tagDBModels
+}
+
+func PetEntityToPetTagDBModels(pet *entity.Pet) []*dbmodel.PetTagDBModel {
+	var petTagDBModels []*dbmodel.PetTagDBModel
+	for _, tag := range pet.Tags {
+		petTagDBModels = append(petTagDBModels, &dbmodel.PetTagDBModel{
+			PetID: pet.ID,
+			TagID: tag.ID,
+		})
+	}
+	return petTagDBModels
 }

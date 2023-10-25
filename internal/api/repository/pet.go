@@ -13,6 +13,7 @@ type PetRepository interface {
 	CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error)
 	CreateCategoryIfNotExist(categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error)
 	CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error)
+	CreatePetTagsIfNotExist(petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error)
 	GetPetsByStatuses(statuses []string) ([]*entity.Pet, error)
 	GetPetByID(id int64) (*entity.Pet, error)
 	UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error)
@@ -69,7 +70,7 @@ func (r *petRepository) CreateCategoryIfNotExist(categoryDBModel *dbmodel.Catego
 }
 
 func (r *petRepository) CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error) {
-	query := `INSERT INTO tags (tag_id, pet_id, tag_name) VALUES (:tag_id, :pet_id, :tag_name) ON CONFLICT DO NOTHING`
+	query := `INSERT INTO tags (tag_id, tag_name) VALUES (:tag_id, :tag_name) ON CONFLICT DO NOTHING`
 	var NewTagDBModels []*dbmodel.TagDBModel
 
 	//TODO:バルクインサートにしたい
@@ -90,6 +91,30 @@ func (r *petRepository) CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) 
 	}
 
 	return NewTagDBModels, nil
+}
+
+func (r *petRepository) CreatePetTagsIfNotExist(petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error) {
+	// Updateにも使うのでIfNotExist
+	query := `INSERT INTO pet_tags (pet_id, tag_id) VALUES (:pet_id, :tag_id) ON CONFLICT DO NOTHING`
+	var NewPetTagDBModels []*dbmodel.PetTagDBModel
+
+	for _, petTagDBModel := range petTagDBModels {
+		rows, err := r.db.NamedQuery(query, petTagDBModel)
+		if err != nil {
+			return nil, err
+		}
+
+		NewPetTagDBModel := &dbmodel.PetTagDBModel{}
+		for rows.Next() {
+			err = rows.StructScan(petTagDBModel)
+			if err != nil {
+				return nil, err
+			}
+		}
+		NewPetTagDBModels = append(NewPetTagDBModels, NewPetTagDBModel)
+	}
+
+	return NewPetTagDBModels, nil
 }
 
 func (r *petRepository) GetPetsByStatuses(statuses []string) ([]*entity.Pet, error) {
