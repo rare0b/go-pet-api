@@ -9,7 +9,6 @@ import (
 )
 
 type PetRepository interface {
-	UploadImage(id string, additionalMetadata string, file string) error //TODO: シグネチャ不明
 	CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error)
 	CreateCategoryIfNotExist(categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error)
 	CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error)

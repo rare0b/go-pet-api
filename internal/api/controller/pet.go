@@ -13,10 +13,10 @@ import (
 )
 
 type PetController interface {
-	UploadImage(w http.ResponseWriter, r *http.Request)
+	//UploadImage(w http.ResponseWriter, r *http.Request)
 	CreatePet(w http.ResponseWriter, r *http.Request)
-	UpdatePet(w http.ResponseWriter, r *http.Request)
-	GetPetsByStatuses(w http.ResponseWriter, r *http.Request)
+	//UpdatePet(w http.ResponseWriter, r *http.Request)
+	//GetPetsByStatuses(w http.ResponseWriter, r *http.Request)
 	GetPetByID(w http.ResponseWriter, r *http.Request)
 	UpdatePetByID(w http.ResponseWriter, r *http.Request)
 	DeletePetByID(w http.ResponseWriter, r *http.Request)
@@ -28,10 +28,6 @@ type petController struct {
 
 func NewPetController(petUsecase usecase.PetUsecase) PetController {
 	return &petController{petUsecase}
-}
-
-func (c *petController) UploadImage(w http.ResponseWriter, r *http.Request) {
-	//TODO
 }
 
 func (c *petController) CreatePet(w http.ResponseWriter, r *http.Request) {
