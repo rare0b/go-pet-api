@@ -13,7 +13,6 @@ type PetRepository interface {
 	CreateCategoryIfNotExist(categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error)
 	CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error)
 	CreatePetTagsIfNotExist(petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error)
-	GetPetsByStatuses(statuses []string) ([]*entity.Pet, error)
 	GetPetByID(id int64) (*entity.Pet, error)
 	UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error)
 	DeletePetByID(id int64) error

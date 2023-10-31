@@ -11,9 +11,7 @@ import (
 )
 
 type PetUsecase interface {
-	UploadImage(id string, additionalMetadata string, file string) error //TODO: シグネチャ不明
 	CreatePet(pet *entity.Pet) (*entity.Pet, error)
-	GetPetsByStatuses(statuses []string) ([]*entity.Pet, error)
 	GetPetByID(id int64) (*entity.Pet, error)
 	UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error)
 	DeletePetByID(id int64) error
@@ -25,11 +23,6 @@ type petUsecase struct {
 
 func NewPetUsecase(petRepository repository.PetRepository) PetUsecase {
 	return &petUsecase{petRepository}
-}
-
-func (u *petUsecase) UploadImage(id string, additionalMetadata string, file string) error {
-	//TODO
-	return errors.New(500, fmt.Sprintf("not implemented in petUsecase.UploadImage"))
 }
 
 func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
@@ -59,11 +52,6 @@ func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
 	}
 
 	return pet, nil
-}
-
-func (u *petUsecase) GetPetsByStatuses(statuses []string) ([]*entity.Pet, error) {
-	//TODO
-	return nil, errors.New(500, fmt.Sprintf("not implemented in petUsecase.GetPetsByStatuses"))
 }
 
 func (u *petUsecase) GetPetByID(id int64) (*entity.Pet, error) {
@@ -118,4 +106,29 @@ func PetEntityToPetTagDBModels(pet *entity.Pet) []*dbmodel.PetTagDBModel {
 		})
 	}
 	return petTagDBModels
+}
+
+func DBModelsToPetEntity(
+	categoryDBModel *dbmodel.CategoryDBModel,
+	petDBModel *dbmodel.PetDBModel,
+	tagDBModels []*dbmodel.TagDBModel) *entity.Pet {
+	category := &entity.Category{
+		ID:   categoryDBModel.CategoryID,
+		Name: categoryDBModel.CategoryName,
+	}
+	var tags []*entity.Tag
+	for _, tagDBModel := range tagDBModels {
+		tags = append(tags, &entity.Tag{
+			ID:   tagDBModel.TagID,
+			Name: tagDBModel.TagName,
+		})
+	}
+	return &entity.Pet{
+		ID:        petDBModel.PetID,
+		Category:  category,
+		Name:      &petDBModel.PetName,
+		PhotoUrls: petDBModel.PhotoUrls,
+		Tags:      tags,
+		Status:    petDBModel.Status,
+	}
 }

@@ -12,10 +12,7 @@ import (
 )
 
 type PetController interface {
-	//UploadImage(w http.ResponseWriter, r *http.Request)
 	CreatePet(w http.ResponseWriter, r *http.Request)
-	//UpdatePet(w http.ResponseWriter, r *http.Request)
-	//GetPetsByStatuses(w http.ResponseWriter, r *http.Request)
 	GetPetByID(w http.ResponseWriter, r *http.Request)
 	UpdatePetByID(w http.ResponseWriter, r *http.Request)
 	DeletePetByID(w http.ResponseWriter, r *http.Request)
