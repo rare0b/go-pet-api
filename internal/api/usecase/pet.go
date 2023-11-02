@@ -5,6 +5,7 @@ package usecase
 import (
 	"fmt"
 	"github.com/go-openapi/errors"
+	"github.com/jmoiron/sqlx"
 	"github.com/rare0b/go-pet-api/internal/api/domain/dbmodel"
 	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
 	"github.com/rare0b/go-pet-api/internal/api/repository"
@@ -18,11 +19,12 @@ type PetUsecase interface {
 }
 
 type petUsecase struct {
+	db            *sqlx.DB
 	petRepository repository.PetRepository
 }
 
-func NewPetUsecase(petRepository repository.PetRepository) PetUsecase {
-	return &petUsecase{petRepository}
+func NewPetUsecase(db *sqlx.DB, petRepository repository.PetRepository) PetUsecase {
+	return &petUsecase{db, petRepository}
 }
 
 func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
@@ -31,23 +33,34 @@ func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
 	tagDBModels := PetEntityToTagDBModels(pet)
 	petTagDBModels := PetEntityToPetTagDBModels(pet)
 
-	categoryDBModel, err := u.petRepository.CreateCategoryIfNotExist(categoryDBModel)
+	tx, err := u.db.Beginx()
 	if err != nil {
 		return nil, err
 	}
 
-	petDBModel, err = u.petRepository.CreatePet(petDBModel)
+	categoryDBModel, err = u.petRepository.CreateCategoryIfNotExist(tx, categoryDBModel)
 	if err != nil {
 		return nil, err
 	}
 
-	tagDBModels, err = u.petRepository.CreateTagsIfNotExist(tagDBModels)
+	petDBModel, err = u.petRepository.CreatePet(tx, petDBModel)
 	if err != nil {
 		return nil, err
 	}
 
-	petTagDBModels, err = u.petRepository.CreatePetTagsIfNotExist(petTagDBModels)
+	tagDBModels, err = u.petRepository.CreateTagsIfNotExist(tx, tagDBModels)
 	if err != nil {
+		return nil, err
+	}
+
+	petTagDBModels, err = u.petRepository.CreatePetTagsIfNotExist(tx, petTagDBModels)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
