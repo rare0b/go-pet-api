@@ -19,7 +19,7 @@ func main() {
 	defer db.Close()
 
 	petRepository := repository.NewPetRepository(db)
-	petUsecase := usecase.NewPetUsecase(petRepository)
+	petUsecase := usecase.NewPetUsecase(db, petRepository)
 	petController := controller.NewPetController(petUsecase)
 	petRouter := router.NewPetRouter(petController)
 	mainRouter := router.NewMainRouter(petRouter)

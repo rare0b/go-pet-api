@@ -9,13 +9,13 @@ import (
 )
 
 type PetRepository interface {
-	CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error)
-	CreateCategoryIfNotExist(categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error)
-	CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error)
-	CreatePetTagsIfNotExist(petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error)
-	GetPetByID(id int64) (*entity.Pet, error)
-	UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error)
-	DeletePetByID(id int64) error
+	CreatePet(tx *sqlx.Tx, petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error)
+	CreateCategoryIfNotExist(tx *sqlx.Tx, categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error)
+	CreateTagsIfNotExist(tx *sqlx.Tx, tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error)
+	CreatePetTagsIfNotExist(tx *sqlx.Tx, petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error)
+	GetPetByID(tx *sqlx.Tx, id int64) (*entity.Pet, error)
+	UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error)
+	DeletePetByID(tx *sqlx.Tx, id int64) error
 }
 
 type petRepository struct {
@@ -26,14 +26,9 @@ func NewPetRepository(db *sqlx.DB) PetRepository {
 	return &petRepository{db}
 }
 
-func (r *petRepository) UploadImage(id string, additionalMetadata string, file string) error {
-	//TODO
-	return errors.New(500, fmt.Sprintf("not implemented in petRepository.UploadImage"))
-}
-
-func (r *petRepository) CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error) {
+func (r *petRepository) CreatePet(tx *sqlx.Tx, petDBModel *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error) {
 	query := `INSERT INTO pets (pet_id, category_id, pet_name, photo_urls, status) VALUES (:pet_id, :category_id, :pet_name, :photo_urls, :status)`
-	rows, err := r.db.NamedQuery(query, petDBModel)
+	rows, err := tx.NamedQuery(query, petDBModel)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +44,9 @@ func (r *petRepository) CreatePet(petDBModel *dbmodel.PetDBModel) (*dbmodel.PetD
 	return NewPetDBModel, nil
 }
 
-func (r *petRepository) CreateCategoryIfNotExist(categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error) {
+func (r *petRepository) CreateCategoryIfNotExist(tx *sqlx.Tx, categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error) {
 	query := `INSERT INTO categories (category_id, category_name) VALUES (:category_id, :category_name) ON CONFLICT DO NOTHING`
-	rows, err := r.db.NamedQuery(query, categoryDBModel)
+	rows, err := tx.NamedQuery(query, categoryDBModel)
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +62,13 @@ func (r *petRepository) CreateCategoryIfNotExist(categoryDBModel *dbmodel.Catego
 	return NewCategoryDBModel, nil
 }
 
-func (r *petRepository) CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error) {
+func (r *petRepository) CreateTagsIfNotExist(tx *sqlx.Tx, tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error) {
 	query := `INSERT INTO tags (tag_id, tag_name) VALUES (:tag_id, :tag_name) ON CONFLICT DO NOTHING`
 	var NewTagDBModels []*dbmodel.TagDBModel
 
 	//TODO:バルクインサートにしたい
 	for _, tagDBModel := range tagDBModels {
-		rows, err := r.db.NamedQuery(query, tagDBModel)
+		rows, err := tx.NamedQuery(query, tagDBModel)
 		if err != nil {
 			return nil, err
 		}
@@ -91,13 +86,13 @@ func (r *petRepository) CreateTagsIfNotExist(tagDBModels []*dbmodel.TagDBModel) 
 	return NewTagDBModels, nil
 }
 
-func (r *petRepository) CreatePetTagsIfNotExist(petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error) {
+func (r *petRepository) CreatePetTagsIfNotExist(tx *sqlx.Tx, petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error) {
 	// Updateにも使うのでIfNotExist
 	query := `INSERT INTO pet_tags (pet_id, tag_id) VALUES (:pet_id, :tag_id) ON CONFLICT DO NOTHING`
 	var NewPetTagDBModels []*dbmodel.PetTagDBModel
 
 	for _, petTagDBModel := range petTagDBModels {
-		rows, err := r.db.NamedQuery(query, petTagDBModel)
+		rows, err := tx.NamedQuery(query, petTagDBModel)
 		if err != nil {
 			return nil, err
 		}
@@ -115,22 +110,17 @@ func (r *petRepository) CreatePetTagsIfNotExist(petTagDBModels []*dbmodel.PetTag
 	return NewPetTagDBModels, nil
 }
 
-func (r *petRepository) GetPetsByStatuses(statuses []string) ([]*entity.Pet, error) {
-	//TODO
-	return nil, errors.New(500, fmt.Sprintf("not implemented in petRepository.GetPetsByStatuses"))
-}
-
-func (r *petRepository) GetPetByID(id int64) (*entity.Pet, error) {
+func (r *petRepository) GetPetByID(tx *sqlx.Tx, id int64) (*entity.Pet, error) {
 	//TODO
 	return nil, errors.New(500, fmt.Sprintf("not implemented in petRepository.GetPetByID"))
 }
 
-func (r *petRepository) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error) {
+func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error) {
 	//TODO
 	return nil, errors.New(500, fmt.Sprintf("not implemented in petRepository.UpdatePetByID"))
 }
 
-func (r *petRepository) DeletePetByID(id int64) error {
+func (r *petRepository) DeletePetByID(tx *sqlx.Tx, id int64) error {
 	//TODO
 	return errors.New(500, fmt.Sprintf("not implemented in petRepository.DeletePetByID"))
 }
