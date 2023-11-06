@@ -110,9 +110,15 @@ func (r *petRepository) CreatePetTagsIfNotExist(tx *sqlx.Tx, petTagDBModels []*d
 	return NewPetTagDBModels, nil
 }
 
-func (r *petRepository) GetPetByID(tx *sqlx.Tx, id int64) (*entity.Pet, error) {
-	//TODO
-	return nil, errors.New(500, fmt.Sprintf("not implemented in petRepository.GetPetByID"))
+func (r *petRepository) GetPetByID(tx *sqlx.Tx, id int64) (*dbmodel.PetDBModel, error) {
+	query := `SELECT * FROM pets WHERE pet_id = $1`
+	petDBModel := &dbmodel.PetDBModel{}
+
+	err := tx.Get(petDBModel, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return petDBModel, nil
 }
 
 func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error) {
