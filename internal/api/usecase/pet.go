@@ -28,10 +28,10 @@ func NewPetUsecase(db *sqlx.DB, petRepository repository.PetRepository) PetUseca
 }
 
 func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
-	categoryDBModel := PetEntityToCategoryDBModel(pet)
-	petDBModel := PetEntityToPetDBModel(pet)
-	tagDBModels := PetEntityToTagDBModels(pet)
-	petTagDBModels := PetEntityToPetTagDBModels(pet)
+	categoryDBModel := petEntityToCategoryDBModel(pet)
+	petDBModel := petEntityToPetDBModel(pet)
+	tagDBModels := petEntityToTagDBModels(pet)
+	petTagDBModels := petEntityToPetTagDBModels(pet)
 
 	tx, err := u.db.Beginx()
 	if err != nil {
@@ -82,14 +82,14 @@ func (u *petUsecase) DeletePetByID(id int64) error {
 	return errors.New(500, fmt.Sprintf("not implemented in petUsecase.DeletePetByID"))
 }
 
-func PetEntityToCategoryDBModel(pet *entity.Pet) *dbmodel.CategoryDBModel {
+func petEntityToCategoryDBModel(pet *entity.Pet) *dbmodel.CategoryDBModel {
 	return &dbmodel.CategoryDBModel{
 		CategoryID:   pet.Category.ID,
 		CategoryName: pet.Category.Name,
 	}
 }
 
-func PetEntityToPetDBModel(pet *entity.Pet) *dbmodel.PetDBModel {
+func petEntityToPetDBModel(pet *entity.Pet) *dbmodel.PetDBModel {
 	return &dbmodel.PetDBModel{
 		PetID:      pet.ID,
 		CategoryID: pet.Category.ID,
@@ -99,7 +99,7 @@ func PetEntityToPetDBModel(pet *entity.Pet) *dbmodel.PetDBModel {
 	}
 }
 
-func PetEntityToTagDBModels(pet *entity.Pet) []*dbmodel.TagDBModel {
+func petEntityToTagDBModels(pet *entity.Pet) []*dbmodel.TagDBModel {
 	var tagDBModels []*dbmodel.TagDBModel
 	for _, tag := range pet.Tags {
 		tagDBModels = append(tagDBModels, &dbmodel.TagDBModel{
@@ -110,7 +110,7 @@ func PetEntityToTagDBModels(pet *entity.Pet) []*dbmodel.TagDBModel {
 	return tagDBModels
 }
 
-func PetEntityToPetTagDBModels(pet *entity.Pet) []*dbmodel.PetTagDBModel {
+func petEntityToPetTagDBModels(pet *entity.Pet) []*dbmodel.PetTagDBModel {
 	var petTagDBModels []*dbmodel.PetTagDBModel
 	for _, tag := range pet.Tags {
 		petTagDBModels = append(petTagDBModels, &dbmodel.PetTagDBModel{
@@ -121,10 +121,11 @@ func PetEntityToPetTagDBModels(pet *entity.Pet) []*dbmodel.PetTagDBModel {
 	return petTagDBModels
 }
 
-func DBModelsToPetEntity(
+func dbModelsToPetEntity(
 	categoryDBModel *dbmodel.CategoryDBModel,
 	petDBModel *dbmodel.PetDBModel,
-	tagDBModels []*dbmodel.TagDBModel) *entity.Pet {
+	tagDBModels []*dbmodel.TagDBModel,
+) *entity.Pet {
 	category := &entity.Category{
 		ID:   categoryDBModel.CategoryID,
 		Name: categoryDBModel.CategoryName,
