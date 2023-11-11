@@ -13,7 +13,10 @@ type PetRepository interface {
 	CreateCategoryIfNotExist(tx *sqlx.Tx, categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error)
 	CreateTagsIfNotExist(tx *sqlx.Tx, tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error)
 	CreatePetTagsIfNotExist(tx *sqlx.Tx, petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error)
-	GetPetByID(tx *sqlx.Tx, id int64) (*entity.Pet, error)
+	GetPetByID(tx *sqlx.Tx, id int64) (*dbmodel.PetDBModel, error)
+	GetCategoryByID(tx *sqlx.Tx, id int64) (*dbmodel.CategoryDBModel, error)
+	GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDBModel, error)
+	GetPetTagsByPetID(tx *sqlx.Tx, petID int64) ([]*dbmodel.PetTagDBModel, error)
 	UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error)
 	DeletePetByID(tx *sqlx.Tx, id int64) error
 }
@@ -119,6 +122,44 @@ func (r *petRepository) GetPetByID(tx *sqlx.Tx, id int64) (*dbmodel.PetDBModel, 
 		return nil, err
 	}
 	return petDBModel, nil
+}
+
+func (r *petRepository) GetCategoryByID(tx *sqlx.Tx, id int64) (*dbmodel.CategoryDBModel, error) {
+	query := `SELECT * FROM categories WHERE category_id = $1`
+	categoryDBModel := &dbmodel.CategoryDBModel{}
+
+	err := tx.Get(categoryDBModel, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return categoryDBModel, nil
+}
+
+func (r *petRepository) GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDBModel, error) {
+	query := `SELECT * FROM tags WHERE tag_id IN (?)`
+	var tagDBModels []*dbmodel.TagDBModel
+
+	query, args, err := sqlx.In(query, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Select(&tagDBModels, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return tagDBModels, nil
+}
+
+func (r *petRepository) GetPetTagsByPetID(tx *sqlx.Tx, petID int64) ([]*dbmodel.PetTagDBModel, error) {
+	query := `SELECT * FROM pet_tags WHERE pet_id = $1`
+	var petTagDBModels []*dbmodel.PetTagDBModel
+
+	err := tx.Select(&petTagDBModels, query, petID)
+	if err != nil {
+		return nil, err
+	}
+	return petTagDBModels, nil
 }
 
 func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error) {
