@@ -68,8 +68,45 @@ func (u *petUsecase) CreatePet(pet *entity.Pet) (*entity.Pet, error) {
 }
 
 func (u *petUsecase) GetPetByID(id int64) (*entity.Pet, error) {
-	//TODO
-	return nil, errors.New(500, fmt.Sprintf("not implemented in petUsecase.GetPetByID"))
+	//TODO: 共有ロックにする
+
+	tx, err := u.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+
+	petDBModel, err := u.petRepository.GetPetByID(tx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	categoryDBModel, err := u.petRepository.GetCategoryByID(tx, petDBModel.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	petTagDBModels, err := u.petRepository.GetPetTagsByPetID(tx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var tagIDs []int64
+	for _, petTagDBModel := range petTagDBModels {
+		tagIDs = append(tagIDs, petTagDBModel.TagID)
+	}
+
+	tagDBModels, err := u.petRepository.GetTagsByIDs(tx, tagIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	return dbModelsToPetEntity(categoryDBModel, petDBModel, tagDBModels), nil
 }
 
 func (u *petUsecase) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error) {
