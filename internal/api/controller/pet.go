@@ -4,7 +4,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
 	"github.com/rare0b/go-pet-api/internal/api/response"
@@ -71,11 +70,6 @@ func (c *petController) GetPetByID(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
-	}
-
-	fmt.Printf("pet: %+v\n", pet)
-	for _, tag := range pet.Tags {
-		fmt.Printf("tag: %+v\n", tag)
 	}
 
 	response, err := json.Marshal(petEntityToPetResponse(pet))
