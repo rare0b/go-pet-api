@@ -115,7 +115,7 @@ func (u *petUsecase) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, erro
 }
 
 func (u *petUsecase) DeletePetByID(id int64) error {
-	//TODO
+	//TODO:pet削除後、pet_tagsにないtag_idはすべて削除
 	return errors.New(500, fmt.Sprintf("not implemented in petUsecase.DeletePetByID"))
 }
 
