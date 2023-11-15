@@ -144,6 +144,8 @@ func (r *petRepository) GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDB
 		return nil, err
 	}
 
+	query = tx.Rebind(query)
+
 	err = tx.Select(&tagDBModels, query, args...)
 	if err != nil {
 		return nil, err

@@ -57,21 +57,24 @@ func (c *petController) CreatePet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *petController) GetPetByID(w http.ResponseWriter, r *http.Request) {
-	petID, err := strconv.ParseInt(chi.URLParam(r, "petID"), 10, 64)
+	petID, err := strconv.ParseInt(chi.URLParam(r, "petId"), 10, 64)
 	if err != nil {
-		http.Error(w, `{"error": "Invalid petID format"}`, http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	pet, err := c.petUsecase.GetPetByID(petID)
 	if err != nil {
-		http.Error(w, `{"error": "Internal Server Error"}`, http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
 	response, err := json.Marshal(pet)
 	if err != nil {
-		http.Error(w, `{"error": "Internal Server Error"}`, http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 		return
 	}
 
