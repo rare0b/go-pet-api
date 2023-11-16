@@ -19,6 +19,7 @@ type PetRepository interface {
 	GetTagIDsByPetID(tx *sqlx.Tx, petID int64) ([]int64, error)
 	UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error)
 	DeletePetByID(tx *sqlx.Tx, id int64) error
+	DeleteExclusiveTagsByPetID(tx *sqlx.Tx, id int64) error
 }
 
 type petRepository struct {
@@ -121,6 +122,7 @@ func (r *petRepository) GetPetByID(tx *sqlx.Tx, id int64) (*dbmodel.PetDBModel, 
 	if err != nil {
 		return nil, err
 	}
+
 	return petDBModel, nil
 }
 
@@ -132,6 +134,7 @@ func (r *petRepository) GetCategoryByID(tx *sqlx.Tx, id int64) (*dbmodel.Categor
 	if err != nil {
 		return nil, err
 	}
+
 	return categoryDBModel, nil
 }
 
@@ -161,6 +164,7 @@ func (r *petRepository) GetTagIDsByPetID(tx *sqlx.Tx, petID int64) ([]int64, err
 	if err != nil {
 		return nil, err
 	}
+
 	return tagIDs, nil
 }
 
@@ -170,6 +174,30 @@ func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*
 }
 
 func (r *petRepository) DeletePetByID(tx *sqlx.Tx, id int64) error {
-	//TODO
-	return errors.New(500, fmt.Sprintf("not implemented in petRepository.DeletePetByID"))
+	query := `DELETE FROM pets WHERE pet_id = $1`
+
+	_, err := tx.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *petRepository) DeleteExclusiveTagsByPetID(tx *sqlx.Tx, id int64) error {
+	query := `
+		-- 指定のPetでのみ使用されているタグを削除
+		WITH exclusive_tags AS (
+		  (SELECT tag_id FROM pet_tags WHERE pet_id = $1)
+		  EXCEPT
+		  (SELECT tag_id FROM pet_tags WHERE pet_id != $1)
+		)
+		DELETE FROM tags WHERE tag_id IN (SELECT tag_id FROM exclusive_tags);`
+
+	_, err := tx.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
