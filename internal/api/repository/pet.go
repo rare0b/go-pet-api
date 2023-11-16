@@ -16,7 +16,7 @@ type PetRepository interface {
 	GetPetByID(tx *sqlx.Tx, id int64) (*dbmodel.PetDBModel, error)
 	GetCategoryByID(tx *sqlx.Tx, id int64) (*dbmodel.CategoryDBModel, error)
 	GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDBModel, error)
-	GetPetTagsByPetID(tx *sqlx.Tx, petID int64) ([]*dbmodel.PetTagDBModel, error)
+	GetTagIDsByPetID(tx *sqlx.Tx, petID int64) ([]int64, error)
 	UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error)
 	DeletePetByID(tx *sqlx.Tx, id int64) error
 }
@@ -137,7 +137,7 @@ func (r *petRepository) GetCategoryByID(tx *sqlx.Tx, id int64) (*dbmodel.Categor
 
 func (r *petRepository) GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDBModel, error) {
 	query := `SELECT * FROM tags WHERE tag_id IN (?)`
-	var tagDBModels []*dbmodel.TagDBModel
+	tagDBModels := make([]*dbmodel.TagDBModel, 0, len(ids))
 
 	query, args, err := sqlx.In(query, ids)
 	if err != nil {
@@ -153,15 +153,15 @@ func (r *petRepository) GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDB
 	return tagDBModels, nil
 }
 
-func (r *petRepository) GetPetTagsByPetID(tx *sqlx.Tx, petID int64) ([]*dbmodel.PetTagDBModel, error) {
-	query := `SELECT * FROM pet_tags WHERE pet_id = $1`
-	var petTagDBModels []*dbmodel.PetTagDBModel
+func (r *petRepository) GetTagIDsByPetID(tx *sqlx.Tx, petID int64) ([]int64, error) {
+	query := `SELECT tag_id FROM pet_tags WHERE pet_id = $1`
+	var tagIDs []int64
 
-	err := tx.Select(&petTagDBModels, query, petID)
+	err := tx.Select(&tagIDs, query, petID)
 	if err != nil {
 		return nil, err
 	}
-	return petTagDBModels, nil
+	return tagIDs, nil
 }
 
 func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error) {

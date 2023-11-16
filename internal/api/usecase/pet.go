@@ -85,14 +85,9 @@ func (u *petUsecase) GetPetByID(id int64) (*entity.Pet, error) {
 		return nil, err
 	}
 
-	petTagDBModels, err := u.petRepository.GetPetTagsByPetID(tx, id)
+	tagIDs, err := u.petRepository.GetTagIDsByPetID(tx, id)
 	if err != nil {
 		return nil, err
-	}
-
-	var tagIDs []int64
-	for _, petTagDBModel := range petTagDBModels {
-		tagIDs = append(tagIDs, petTagDBModel.TagID)
 	}
 
 	tagDBModels, err := u.petRepository.GetTagsByIDs(tx, tagIDs)
