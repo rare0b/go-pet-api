@@ -2,7 +2,7 @@
 https://petstore.swagger.io
 
 ## 要件
-Swaggerドキュメントには記載なし、よくありそうな要件を想像
+Swaggerドキュメントには記載ないが、よくありそうな要件を想像
 - 管理者はpetを任意に登録/取得/更新/削除できる
 - categoryは事前にまたはpet作成時存在しない場合に作成され、petは必ずいずれか1つのcategoryに紐づく
 - tagはpet作成時存在しない場合に作成され、petに0つ以上のtagが紐づく
