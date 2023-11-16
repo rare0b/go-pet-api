@@ -3,8 +3,6 @@ package usecase
 //go:generate mockgen -source="internal/api/usecase/pet.go" -destination="internal/mock/usecase/pet.go" -package=mock
 
 import (
-	"fmt"
-	"github.com/go-openapi/errors"
 	"github.com/jmoiron/sqlx"
 	"github.com/rare0b/go-pet-api/internal/api/domain/dbmodel"
 	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
@@ -105,8 +103,74 @@ func (u *petUsecase) GetPetByID(id int64) (*entity.Pet, error) {
 }
 
 func (u *petUsecase) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, error) {
-	//TODO
-	return nil, errors.New(500, fmt.Sprintf("not implemented in petUsecase.UpdatePetByID"))
+	tx, err := u.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+
+	// 更新対象のpetが存在するか確認
+	_, err = u.petRepository.GetPetByID(tx, id)
+
+	if err != nil {
+		pet, err = u.CreatePet(pet)
+		if err != nil {
+			return nil, err
+		}
+
+		return pet, nil
+	} else {
+		categoryDBModel := petEntityToCategoryDBModel(pet)
+		petDBModel := petEntityToPetDBModel(pet)
+		tagDBModels := petEntityToTagDBModels(pet)
+		petTagDBModels := petEntityToPetTagDBModels(pet)
+
+		tx, err := u.db.Beginx()
+		if err != nil {
+			return nil, err
+		}
+
+		// categoryは他petと共用なので、UpdateではなくCreateのみの想定
+		categoryDBModel, err = u.petRepository.CreateCategoryIfNotExist(tx, categoryDBModel)
+		if err != nil {
+			return nil, err
+		}
+
+		petDBModel, err = u.petRepository.UpdatePetByID(tx, id, petDBModel)
+		if err != nil {
+			return nil, err
+		}
+
+		// tagは他petと共用なので、UpdateではなくCreateのみの想定
+		tagDBModels, err = u.petRepository.CreateTagsIfNotExist(tx, tagDBModels)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update前後のtagの紐づきを削除→作成
+		err = u.petRepository.DeletePetTagsByPetID(tx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		petTagDBModels, err = u.petRepository.CreatePetTagsIfNotExist(tx, petTagDBModels)
+		if err != nil {
+			return nil, err
+		}
+
+		// pet更新後、他のどのpetも持っていないtagは削除
+		err = u.petRepository.DeleteUnusedTags(tx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		return pet, nil
+	}
 }
 
 func (u *petUsecase) DeletePetByID(id int64) error {
@@ -115,14 +179,14 @@ func (u *petUsecase) DeletePetByID(id int64) error {
 		return err
 	}
 
-	// 削除するpetがもつtagのうち、他のどのpetも持っていないtagは削除
-	err = u.petRepository.DeleteExclusiveTagsByPetID(tx, id)
+	// pet_tagsも参照整合性制約で削除される
+	err = u.petRepository.DeletePetByID(tx, id)
 	if err != nil {
 		return err
 	}
 
-	// pet_tagsも参照整合性制約で削除される
-	err = u.petRepository.DeletePetByID(tx, id)
+	// pet削除後、他のどのpetも持っていないtagは削除
+	err = u.petRepository.DeleteUnusedTags(tx)
 	if err != nil {
 		return err
 	}
