@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
+	"github.com/rare0b/go-pet-api/internal/api/response"
 	"github.com/rare0b/go-pet-api/internal/api/usecase"
 	"net/http"
 	"strconv"
@@ -44,7 +45,7 @@ func (c *petController) CreatePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(pet)
+	response, err := json.Marshal(petEntityToPetResponse(pet))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -71,7 +72,7 @@ func (c *petController) GetPetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(pet)
+	response, err := json.Marshal(petEntityToPetResponse(pet))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -108,7 +109,7 @@ func (c *petController) UpdatePetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(pet)
+	response, err := json.Marshal(petEntityToPetResponse(pet))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -136,4 +137,15 @@ func (c *petController) DeletePetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func petEntityToPetResponse(pet *entity.Pet) *response.PetResponse {
+	return &response.PetResponse{
+		ID:        pet.ID,
+		Category:  pet.Category,
+		Name:      pet.Name,
+		PhotoUrls: pet.PhotoUrls,
+		Tags:      pet.Tags,
+		Status:    pet.Status,
+	}
 }
