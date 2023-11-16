@@ -4,8 +4,8 @@ https://petstore.swagger.io
 ## 要件
 Swaggerドキュメントには記載なし、よくありそうな要件を想像
 - 管理者はpetを任意に登録/取得/更新/削除できる
-- categoryは事前にまたはpet作成時に作成され、petは必ずいずれか1つのcategoryに紐づく
-- tagは管理者が任意に0つ以上設定し、他のpetに設定されたタグを再利用できる
+- categoryは事前にまたはpet作成時存在しない場合に作成され、petは必ずいずれか1つのcategoryに紐づく
+- tagはpet作成時存在しない場合に作成され、petに0つ以上のtagが紐づく
 - tagは必ず1つ以上のペットに紐づき、Update/Deleteで紐づくpetが無くなった場合は同時に削除される
 
 ## ER図
