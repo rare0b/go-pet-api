@@ -1,11 +1,8 @@
 package repository
 
 import (
-	"fmt"
-	"github.com/go-openapi/errors"
 	"github.com/jmoiron/sqlx"
 	"github.com/rare0b/go-pet-api/internal/api/domain/dbmodel"
-	"github.com/rare0b/go-pet-api/internal/api/domain/entity"
 )
 
 type PetRepository interface {
@@ -17,9 +14,10 @@ type PetRepository interface {
 	GetCategoryByID(tx *sqlx.Tx, id int64) (*dbmodel.CategoryDBModel, error)
 	GetTagsByIDs(tx *sqlx.Tx, ids []int64) ([]*dbmodel.TagDBModel, error)
 	GetTagIDsByPetID(tx *sqlx.Tx, petID int64) ([]int64, error)
-	UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error)
+	UpdatePetByID(tx *sqlx.Tx, id int64, pet *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error)
 	DeletePetByID(tx *sqlx.Tx, id int64) error
-	DeleteExclusiveTagsByPetID(tx *sqlx.Tx, id int64) error
+	DeleteUnusedTags(tx *sqlx.Tx) error
+	DeletePetTagsByPetID(tx *sqlx.Tx, petID int64) error
 }
 
 type petRepository struct {
@@ -168,9 +166,22 @@ func (r *petRepository) GetTagIDsByPetID(tx *sqlx.Tx, petID int64) ([]int64, err
 	return tagIDs, nil
 }
 
-func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *entity.Pet) (*entity.Pet, error) {
-	//TODO
-	return nil, errors.New(500, fmt.Sprintf("not implemented in petRepository.UpdatePetByID"))
+func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *dbmodel.PetDBModel) (*dbmodel.PetDBModel, error) {
+	query := `UPDATE pets SET category_id = :category_id, pet_name = :pet_name, photo_urls = :photo_urls, status = :status WHERE pet_id = :pet_id`
+	rows, err := tx.NamedQuery(query, pet)
+	if err != nil {
+		return nil, err
+	}
+
+	var newPetDBModel *dbmodel.PetDBModel
+	for rows.Next() {
+		err = rows.StructScan(newPetDBModel)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return newPetDBModel, nil
 }
 
 func (r *petRepository) DeletePetByID(tx *sqlx.Tx, id int64) error {
@@ -184,17 +195,28 @@ func (r *petRepository) DeletePetByID(tx *sqlx.Tx, id int64) error {
 	return nil
 }
 
-func (r *petRepository) DeleteExclusiveTagsByPetID(tx *sqlx.Tx, id int64) error {
+func (r *petRepository) DeleteUnusedTags(tx *sqlx.Tx) error {
 	query := `
-		-- 指定のPetでのみ使用されているタグを削除
-		WITH exclusive_tags AS (
-		  (SELECT tag_id FROM pet_tags WHERE pet_id = $1)
+		-- 現在pet_tagsに存在しないtagを削除
+		WITH unused_tags AS (
+		  SELECT tag_id FROM tags
 		  EXCEPT
-		  (SELECT tag_id FROM pet_tags WHERE pet_id != $1)
+		  SELECT tag_id FROM pet_tags
 		)
-		DELETE FROM tags WHERE tag_id IN (SELECT tag_id FROM exclusive_tags);`
+		DELETE FROM tags WHERE tag_id IN (SELECT tag_id FROM unused_tags);`
 
-	_, err := tx.Exec(query, id)
+	_, err := tx.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *petRepository) DeletePetTagsByPetID(tx *sqlx.Tx, petID int64) error {
+	query := `DELETE FROM pet_tags WHERE pet_id = $1`
+
+	_, err := tx.Exec(query, petID)
 	if err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ func NewPetRouter(c controller.PetController) http.Handler {
 	//r.Put("/", c.UpdatePet)
 	//r.Get("/findByStatus", c.GetPetsByStatuses)
 	r.Get("/{petId}", c.GetPetByID)
-	r.Post("/{petId}", c.UpdatePetByID)
+	r.Put("/{petId}", c.UpdatePetByID)
 	r.Delete("/{petId}", c.DeletePetByID)
 
 	return r
