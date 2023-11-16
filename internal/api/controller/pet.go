@@ -131,7 +131,11 @@ func (c *petController) DeletePetByID(w http.ResponseWriter, r *http.Request) {
 
 	err = c.petUsecase.DeletePetByID(petID)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		if err.Error() == "pet not found" {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		w.Write([]byte(err.Error()))
 		return
 	}

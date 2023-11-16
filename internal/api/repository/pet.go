@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"github.com/jmoiron/sqlx"
 	"github.com/rare0b/go-pet-api/internal/api/domain/dbmodel"
 )
@@ -35,15 +36,15 @@ func (r *petRepository) CreatePet(tx *sqlx.Tx, petDBModel *dbmodel.PetDBModel) (
 		return nil, err
 	}
 
-	var NewPetDBModel *dbmodel.PetDBModel
+	var newPetDBModel *dbmodel.PetDBModel
 	for rows.Next() {
-		err = rows.StructScan(petDBModel)
+		err = rows.StructScan(newPetDBModel)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return NewPetDBModel, nil
+	return newPetDBModel, nil
 }
 
 func (r *petRepository) CreateCategoryIfNotExist(tx *sqlx.Tx, categoryDBModel *dbmodel.CategoryDBModel) (*dbmodel.CategoryDBModel, error) {
@@ -53,20 +54,20 @@ func (r *petRepository) CreateCategoryIfNotExist(tx *sqlx.Tx, categoryDBModel *d
 		return nil, err
 	}
 
-	var NewCategoryDBModel *dbmodel.CategoryDBModel
+	var newCategoryDBModel *dbmodel.CategoryDBModel
 	for rows.Next() {
-		err = rows.StructScan(NewCategoryDBModel)
+		err = rows.StructScan(newCategoryDBModel)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return NewCategoryDBModel, nil
+	return newCategoryDBModel, nil
 }
 
 func (r *petRepository) CreateTagsIfNotExist(tx *sqlx.Tx, tagDBModels []*dbmodel.TagDBModel) ([]*dbmodel.TagDBModel, error) {
 	query := `INSERT INTO tags (tag_id, tag_name) VALUES (:tag_id, :tag_name) ON CONFLICT DO NOTHING`
-	var NewTagDBModels []*dbmodel.TagDBModel
+	var newTagDBModels []*dbmodel.TagDBModel
 
 	//TODO:バルクインサートにしたい
 	for _, tagDBModel := range tagDBModels {
@@ -75,23 +76,23 @@ func (r *petRepository) CreateTagsIfNotExist(tx *sqlx.Tx, tagDBModels []*dbmodel
 			return nil, err
 		}
 
-		NewTagDBModel := &dbmodel.TagDBModel{}
+		newTagDBModel := &dbmodel.TagDBModel{}
 		for rows.Next() {
-			err = rows.StructScan(tagDBModel)
+			err = rows.StructScan(newTagDBModel)
 			if err != nil {
 				return nil, err
 			}
 		}
-		NewTagDBModels = append(NewTagDBModels, NewTagDBModel)
+		newTagDBModels = append(newTagDBModels, newTagDBModel)
 	}
 
-	return NewTagDBModels, nil
+	return newTagDBModels, nil
 }
 
 func (r *petRepository) CreatePetTagsIfNotExist(tx *sqlx.Tx, petTagDBModels []*dbmodel.PetTagDBModel) ([]*dbmodel.PetTagDBModel, error) {
 	// Updateにも使うのでIfNotExist
 	query := `INSERT INTO pet_tags (pet_id, tag_id) VALUES (:pet_id, :tag_id) ON CONFLICT DO NOTHING`
-	var NewPetTagDBModels []*dbmodel.PetTagDBModel
+	var newPetTagDBModels []*dbmodel.PetTagDBModel
 
 	for _, petTagDBModel := range petTagDBModels {
 		rows, err := tx.NamedQuery(query, petTagDBModel)
@@ -99,17 +100,17 @@ func (r *petRepository) CreatePetTagsIfNotExist(tx *sqlx.Tx, petTagDBModels []*d
 			return nil, err
 		}
 
-		NewPetTagDBModel := &dbmodel.PetTagDBModel{}
+		newPetTagDBModel := &dbmodel.PetTagDBModel{}
 		for rows.Next() {
-			err = rows.StructScan(petTagDBModel)
+			err = rows.StructScan(newPetTagDBModel)
 			if err != nil {
 				return nil, err
 			}
 		}
-		NewPetTagDBModels = append(NewPetTagDBModels, NewPetTagDBModel)
+		newPetTagDBModels = append(newPetTagDBModels, newPetTagDBModel)
 	}
 
-	return NewPetTagDBModels, nil
+	return newPetTagDBModels, nil
 }
 
 func (r *petRepository) GetPetByID(tx *sqlx.Tx, id int64) (*dbmodel.PetDBModel, error) {
@@ -187,9 +188,18 @@ func (r *petRepository) UpdatePetByID(tx *sqlx.Tx, id int64, pet *dbmodel.PetDBM
 func (r *petRepository) DeletePetByID(tx *sqlx.Tx, id int64) error {
 	query := `DELETE FROM pets WHERE pet_id = $1`
 
-	_, err := tx.Exec(query, id)
+	result, err := tx.Exec(query, id)
 	if err != nil {
 		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("pet not found")
 	}
 
 	return nil
