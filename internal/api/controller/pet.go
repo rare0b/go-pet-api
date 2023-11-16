@@ -85,7 +85,7 @@ func (c *petController) GetPetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *petController) UpdatePetByID(w http.ResponseWriter, r *http.Request) {
-	petID, err := strconv.ParseInt(chi.URLParam(r, "petID"), 10, 64)
+	petID, err := strconv.ParseInt(chi.URLParam(r, "petId"), 10, 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -122,7 +122,7 @@ func (c *petController) UpdatePetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *petController) DeletePetByID(w http.ResponseWriter, r *http.Request) {
-	petID, err := strconv.ParseInt(chi.URLParam(r, "petID"), 10, 64)
+	petID, err := strconv.ParseInt(chi.URLParam(r, "petId"), 10, 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))

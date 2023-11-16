@@ -110,8 +110,30 @@ func (u *petUsecase) UpdatePetByID(id int64, pet *entity.Pet) (*entity.Pet, erro
 }
 
 func (u *petUsecase) DeletePetByID(id int64) error {
-	//TODO:pet削除後、pet_tagsにないtag_idはすべて削除
-	return errors.New(500, fmt.Sprintf("not implemented in petUsecase.DeletePetByID"))
+	tx, err := u.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	// 削除するpetがもつtagのうち、他のどのpetも持っていないtagは削除
+	err = u.petRepository.DeleteExclusiveTagsByPetID(tx, id)
+	if err != nil {
+		return err
+	}
+
+	// pet_tagsも参照整合性制約で削除される
+	err = u.petRepository.DeletePetByID(tx, id)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 func petEntityToCategoryDBModel(pet *entity.Pet) *dbmodel.CategoryDBModel {
